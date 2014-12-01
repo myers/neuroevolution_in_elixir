@@ -1,3 +1,4 @@
+# From 6.1 Simulating A Neuron
 defmodule SimpleNeuron do
 
   # The create function spawns a single neuron, where the weights and the bias are generated randomly to be between -0.5 and 0.5

@@ -1,3 +1,4 @@
+# From 6.2 A One Neuron Neural Network
 defmodule SimplestNN do
   # The create function first generates 3 weights, with the 3rd weigth being the bias. The neuron is spawed first, and is then sent the pids of the sensor and actuator that it's connected with.  Then the cortex element is registered and provided with the pids of all the elements in the NN system.
   def create do

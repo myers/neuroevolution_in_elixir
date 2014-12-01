@@ -10,14 +10,14 @@ syntax I'm translating the Erlang code to Elixir as I go.
 
 ## Simple Neuron
 
-    mix -S iex
+    iex -S mix
     SimpleNeuron.create
     SimpleNeuron.sense [1,2]
 
 ## Simplest NN
 
-    mix -S iex
-    SimpleNeuron.create
+    iex -S mix
+    SimplestNN.create
     :cortex |> send(:sense_think_act)
 
     
