@@ -5,28 +5,24 @@ defmodule FFNN.Constructor do
   alias FFNN.Neuron
 
   @doc """
-  The construct_genotype function accepts the name of the file to
-  which we'll save the genotype, sensor name, actuator name, and
-  the hidden layer density parameters. We have to generate unique
-  Ids for every sensor and actuator. The sensor and actuator names
-  are used as input to the create_sensor and create_actuator
-  functions, which in turn generate the actual Sensor and Actuator
-  representing tuples. We create unique Ids for sensors and
-  actuators so that when in the future a NN uses 2 or more sensors
-  or actuators of the same type, we will be able to differenti-
-  ate between them using their Ids. After the Sensor and Actuator
-  tuples are generated, we extract the NN’s input and output
-  vector lengths from the sensor and actuator used by the system.
-  The Input_VL is then used to specify how many weights the
-  neurons in the input layer will need, and the Output_VL
-  specifies how many neurons are in the output layer of the NN.
-  After appending the HiddenLayerDensites to the now known
-  number of neurons in the last layer to generate the full
-  LayerDensities list, we use the create_NeuroLayers function to
-  generate the Neuron representing tuples. We then update the
-  Sensor and Actuator records with proper fanin and fanout ids
-  from the freshly created Neuron tuples, compose the Cortex, and
-  write the genotype to file.
+  The `construct_genotype` function accepts the name of the file to which we'll
+  save the genotype, sensor name, actuator name, and the hidden layer density
+  parameters. We have to generate unique Ids for every sensor and actuator. The
+  sensor and actuator names are used as input to the create_sensor and
+  create_actuator functions, which in turn generate the actual Sensor and
+  Actuator representing tuples. We create unique Ids for sensors and actuators
+  so that when in the future a NN uses 2 or more sensors or actuators of the
+  same type, we will be able to differenti- ate between them using their Ids.
+  After the Sensor and Actuator tuples are generated, we extract the NN’s input
+  and output vector lengths from the sensor and actuator used by the system. The
+  Input_VL is then used to specify how many weights the neurons in the input
+  layer will need, and the Output_VL specifies how many neurons are in the
+  output layer of the NN. After appending the HiddenLayerDensites to the now
+  known number of neurons in the last layer to generate the full LayerDensities
+  list, we use the create_NeuroLayers function to generate the Neuron
+  representing tuples. We then update the Sensor and Actuator records with
+  proper fanin and fanout ids from the freshly created Neuron tuples, compose
+  the Cortex, and write the genotype to file.
   """
   def construct_genotype(sensor_name, actuator_name, hidden_layer_densities) do
     construct_genotype(:ffnn, sensor_name, actuator_name, hidden_layer_densities)
@@ -43,30 +39,27 @@ defmodule FFNN.Constructor do
     output_layer = List.last(neurons)
     fl_nids = Enum.map(input_layer, fn (n) -> n.id end)
     ll_nids = Enum.map(output_layer, fn (n) -> n.id end)
-    n_ids = List.flatten(neurons) |> List.map(fn (n) -> n.id end)
-    sensor = sensor.update(cx_id: cx_id, fanout_ids: fl_nids)
-    actuator = actuator.update(cx_id: cx_id, fanin_ids: ll_nids)
+    n_ids = for n <- List.flatten(neurons), do: n.id
+    sensor = %Sensor{sensor | cx_id: cx_id, fanout_ids: fl_nids}
+    actuator = %Actuator{actuator | cx_id: cx_id, fanin_ids: ll_nids}
     cortex = create_cortex(cx_id, sensor.id, actuator.id, n_ids)
     genotype = List.flatten([cortex, sensor, actuator | neurons])
-    :ok = File.write!(file_name, :io_lib.fwrite("~p.\n", genotype), [:write])
+    :ok = :file.write_file(file_name, :io_lib.fwrite("~p.\n",[genotype]))
   end
 
   @doc """
-  Every sensor and actuator uses some kind of function associated
-  with it, a function that either polls the environment for
-  sensory signals (in the case of a sensor) or acts upon the
-  environment (in the case of an actuator). It is the function
-  that we need to define and program before it is used, and the
-  name of the function is the same as the name of the sensor or
-  actuator itself. For example, the create_sensor/1 has specified
-  only the rng sensor, because that is the only sensor function
-  we’ve finished developing. The rng function has its own vl
-  specification, which will determine the number of weights that a
-  neuron will need to allocate if it is to accept this sensor's
-  output vector. The same principles apply to the create_actuator
-  function. Both, create_sensor and create_actuator function,
-  given the name of the sensor or actuator, will return a record
-  with all the specifications of that element, each with its own
+  Every sensor and actuator uses some kind of function associated with it, a
+  function that either polls the environment for sensory signals (in the case of
+  a sensor) or acts upon the environment (in the case of an actuator). It is the
+  function that we need to define and program before it is used, and the name of
+  the function is the same as the name of the sensor or actuator itself. For
+  example, the create_sensor/1 has specified only the rng sensor, because that
+  is the only sensor function we’ve finished developing. The rng function has
+  its own vl specification, which will determine the number of weights that a
+  neuron will need to allocate if it is to accept this sensor's output vector.
+  The same principles apply to the create_actuator function. Both, create_sensor
+  and create_actuator function, given the name of the sensor or actuator, will
+  return a record with all the specifications of that element, each with its own
   unique Id.
   """
   def create_sensor(name) do
@@ -106,7 +99,7 @@ defmodule FFNN.Constructor do
     n_ids = for id <- generate_ids(fl_neurons, []), do: {:neuron, {1, id}}
     create_neuro_layers(cx_id, actuator.id, 1, tot_layers, input_id_ps, n_ids, next_lds, [])
   end
-  def create_neuro_layers(cx_id, actuator_id, layer_index, tot_layers, input_id_ps, n_ids, [next_ld, lds], acc) do
+  def create_neuro_layers(cx_id, actuator_id, layer_index, tot_layers, input_id_ps, n_ids, [next_ld|lds], acc) do
     output_nids = for id <- generate_ids(next_ld,[]), do: {:neuron, {layer_index+1, id}}
     layer_neurons = create_neuro_layer(cx_id, input_id_ps, n_ids, output_nids, [])
     next_input_id_ps = for n_id <- n_ids, do: {n_id,1}
