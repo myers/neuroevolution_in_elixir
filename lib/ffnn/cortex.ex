@@ -10,8 +10,8 @@ defmodule FFNN.Cortex do
   learning algorithm, the termination criteria will depend on the fitness of the
   NN, or some other useful property
   """
-  def gen(exo_self_pid) do
-    spawn fn() -> loop(exo_self_pid) end
+  def gen(exoself_pid) do
+    spawn fn() -> loop(exoself_pid) end
   end
 
   @doc """
@@ -27,11 +27,11 @@ defmodule FFNN.Cortex do
   Think-Act completes, once this reaches 0, the NN system begins its termination
   and backup process.
   """
-  def loop(exo_self_pid) do
+  def loop(exoself_pid) do
     receive do
-      {exo_self_pid, {id, s_pids, a_pids, n_pids}, total_steps} ->
+      {exoself_pid, {id, s_pids, a_pids, n_pids}, total_steps} ->
         for s_pid <- s_pids, do: {self, :sync} |> s_pid.send
-        loop(id, exo_self_pid, s_pids, {a_pids, a_pids}, n_pids, total_steps)
+        loop(id, exoself_pid, s_pids, {a_pids, a_pids}, n_pids, total_steps)
     end
   end
   def loop(id, exoself_pid, s_pids, {_a_pids, m_a_pids}, n_pids, 0) do
