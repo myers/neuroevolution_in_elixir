@@ -40,7 +40,7 @@ defmodule SimpleNeuron do
   def sense(signal) do
     case is_list(signal) and (length(signal) == 2) do
       true -> 
-        send(:neuron, {self(), signal})
+        send(:neuron, {self, signal})
         receive do
           {:result, output} ->
             IO.puts " Output #{inspect output}"
