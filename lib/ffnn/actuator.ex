@@ -11,8 +11,8 @@ defmodule FFNN.Actuator do
 
   def loop(exoself_pid) do
     receive do
-      {exoself_pid, {id, cortex_pid, actuator_name, fanin_pids}} ->
-        loop(Id, cortex_pid, actuator_name, {fanin_pids, fanin_pids}, [])
+      {^exoself_pid, {id, cortex_pid, actuator_name, fanin_pids}} ->
+        loop(id, cortex_pid, actuator_name, {fanin_pids, fanin_pids}, [])
     end
   end
 
@@ -27,16 +27,16 @@ defmodule FFNN.Actuator do
   """
   def loop(id, cortex_pid, actuator_name, {[from_pid|fanin_pids], m_fanin_pids}, acc) do
     receive do
-      {from_pid, forward, input} ->
-        loop(Id, cortex_pid, actuator_name, {fanin_pids, m_fanin_pids}, List.flatten([input, acc]))
-      {cortex_pid, terminate} ->
+      {^from_pid, :forward, input} ->
+        loop(id, cortex_pid, actuator_name, {fanin_pids, m_fanin_pids}, List.flatten([input, acc]))
+      {^cortex_pid, :terminate} ->
         :ok
     end
   end
-  def loop(Id, cortex_pid, actuator_name, {[], m_fanin_pids}, acc) do
+  def loop(id, cortex_pid, actuator_name, {[], m_fanin_pids}, acc) do
     apply(__MODULE__, actuator_name, [Enum.reverse(acc)])
     send(cortex_pid, {self, :sync})
-    loop(Id, cortex_pid, actuator_name, {m_fanin_pids, m_fanin_pids}, [])
+    loop(id, cortex_pid, actuator_name, {m_fanin_pids, m_fanin_pids}, [])
   end
 
 
@@ -45,6 +45,6 @@ defmodule FFNN.Actuator do
   The pts actuation function simply prints to screen the vector passed to it.
   """
   def pts(result) do
-    #IO.puts "actuator:pts(result): #{inspect(result)}"
+    IO.puts "actuator:pts(result): #{inspect(result)}"
   end
 end

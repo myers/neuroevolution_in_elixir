@@ -29,7 +29,7 @@ defmodule FFNN.Cortex do
   """
   def loop(exoself_pid) do
     receive do
-      {exoself_pid, {id, s_pids, a_pids, n_pids}, total_steps} ->
+      {^exoself_pid, {id, s_pids, a_pids, n_pids}, total_steps} ->
         for s_pid <- s_pids, do: send(s_pid, {self, :sync})
         loop(id, exoself_pid, s_pids, {a_pids, a_pids}, n_pids, total_steps)
     end
@@ -44,7 +44,7 @@ defmodule FFNN.Cortex do
   end
   def loop(id, exoself_pid, s_pids, {[a_pid|a_pids], m_a_pids}, n_pids, step) do
     receive do
-      {a_pid, :sync} ->
+      {^a_pid, :sync} ->
         loop(id, exoself_pid, s_pids, {a_pids, m_a_pids}, n_pids, step)
       :terminate ->
         IO.puts "Cortex:#{inspect(id)} is terminating."
@@ -68,7 +68,7 @@ defmodule FFNN.Cortex do
   def get_backup([n_pid|n_pids], acc) do
     send(n_pid, {self, :get_backup})
     receive do
-      {n_pid, n_id, weight_tuples} ->
+      {^n_pid, n_id, weight_tuples} ->
         get_backup(n_pids, [{n_id, weight_tuples}|acc])
     end
   end

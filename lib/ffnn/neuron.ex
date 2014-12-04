@@ -11,7 +11,7 @@ defmodule FFNN.Neuron do
 
   def loop(exoself_pid) do
     receive do
-      {exoself_pid, {id, cortex_pid, af, input_id_ps, output_pids}} ->
+      {^exoself_pid, {id, cortex_pid, af, input_id_ps, output_pids}} ->
         loop(id, cortex_pid, af, {input_id_ps, input_id_ps}, output_pids, 0)
     end
   end
@@ -30,13 +30,13 @@ defmodule FFNN.Neuron do
   """
   def loop(id, cortex_pid, af, {[{input_pid, weights}|input_id_ps], m_input_id_ps}, output_pids, acc) do
     receive do
-      {input_pid, :forward, input} ->
+      {^input_pid, :forward, input} ->
         result = dot(input, weights, 0)
         loop(id, cortex_pid, af, {input_id_ps, m_input_id_ps}, output_pids, result+acc)
-      {cortex_pid, :get_backup} ->
+      {^cortex_pid, :get_backup} ->
         send(cortex_pid, {self, id, m_input_id_ps})
         loop(id, cortex_pid, af, {[{input_pid, weights}|input_id_ps], m_input_id_ps}, output_pids, acc)
-      {cortex_pid, :terminate} ->
+      {^cortex_pid, :terminate} ->
         :ok
     end
   end

@@ -31,9 +31,7 @@ defmodule FFNN.Exoself do
   end
   def map(file_name, genotype) do
     ids_n_pids = :ets.new(:ids_n_pids, [:set, :private])
-    IO.puts("genotype: #{is_list(genotype)} #{inspect(genotype)}")
     [cortex|cerebral_units] = genotype
-    IO.puts "cortex: #{inspect(cortex)}"
     spawn_cerebral_units(ids_n_pids, Cortex, [cortex.id])
     spawn_cerebral_units(ids_n_pids, Sensor, cortex.sensor_ids)
     spawn_cerebral_units(ids_n_pids, Actuator, cortex.actuator_ids)
@@ -43,7 +41,7 @@ defmodule FFNN.Exoself do
     cortex_pid = :ets.lookup_element(ids_n_pids, cortex.id, 2)
 
     receive do
-      {cortex_pid, :backup, neuron_ids_n_weights} ->
+      {^cortex_pid, :backup, neuron_ids_n_weights} ->
         u_genotype = update_genotype(ids_n_pids, genotype, neuron_ids_n_weights)
         {:ok, file} = :file.open(file_name, :write)
         :lists.foreach(fn(x) -> :io.format(file, "~p.~n", [x]) end, u_genotype)
@@ -77,8 +75,6 @@ defmodule FFNN.Exoself do
     sensor_pid = :ets.lookup_element(ids_n_pids, sensor.id, 2)
     cortex_pid = :ets.lookup_element(ids_n_pids, sensor.cx_id, 2)
     fanout_pids = for id <- sensor.fanout_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
-
-    msg = {self, {sensor.id, cortex_pid, sensor.name, sensor.vl, fanout_pids}}
     send sensor_pid, {self, {sensor.id, cortex_pid, sensor.name, sensor.vl, fanout_pids}}
     link_cerebral_units(cerebral_units, ids_n_pids)
   end
