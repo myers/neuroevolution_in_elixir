@@ -1,4 +1,8 @@
 defmodule FFNN.Exoself do
+  alias FFNN.Sensor
+  alias FFNN.Actuator
+  alias FFNN.Cortex
+  alias FFNN.Neuron
 
   @doc ~S"""
   The map/1 function maps the tuple encoded genotype into a process based
@@ -21,28 +25,28 @@ defmodule FFNN.Exoself do
     map(:ffnn)
   end
   def map(file_name) do
-    {ok, genotype} = :file.consult(file_name)
-    spawn(fn -> map(file_name, genotype) end)
+    {:ok, genotype} = :file.consult(file_name)
+    task = Task.async(fn -> map(file_name, genotype) end)
+    Task.await(task)
   end
   def map(file_name, genotype) do
     ids_n_pids = :ets.new(:ids_n_pids, [:set, :private])
+    IO.puts("genotype: #{is_list(genotype)} #{inspect(genotype)}")
     [cortex|cerebral_units] = genotype
-    sensor_ids = cortex.sensor_ids
-    actuator_ids = cortex.actuator_ids
-    n_ids = cortex.n_ids
-    spawn_cerebral_units(ids_n_pids, cortex, [cortex.id])
-    spawn_cerebral_units(ids_n_pids, sensor, sensor_ids)
-    spawn_cerebral_units(ids_n_pids, actuator, actuator_ids)
-    spawn_cerebral_units(ids_n_pids, neuron, n_ids)
+    IO.puts "cortex: #{inspect(cortex)}"
+    spawn_cerebral_units(ids_n_pids, Cortex, [cortex.id])
+    spawn_cerebral_units(ids_n_pids, Sensor, cortex.sensor_ids)
+    spawn_cerebral_units(ids_n_pids, Actuator, cortex.actuator_ids)
+    spawn_cerebral_units(ids_n_pids, Neuron, cortex.n_ids)
     link_cerebral_units(cerebral_units, ids_n_pids)
     link_cortex(cortex, ids_n_pids)
     cortex_pid = :ets.lookup_element(ids_n_pids, cortex.id, 2)
 
     receive do
-      {cortex_pid, :backup, neuron_ids_n_weights}->
+      {cortex_pid, :backup, neuron_ids_n_weights} ->
         u_genotype = update_genotype(ids_n_pids, genotype, neuron_ids_n_weights)
         {:ok, file} = :file.open(file_name, :write)
-        :lists.foreach(fn(X) -> :io.format(file, "~p.~n", [X]) end, u_genotype)
+        :lists.foreach(fn(x) -> :io.format(file, "~p.~n", [x]) end, u_genotype)
         :file.close(file)
         :io.format("Finished updating to file:~p~n", [file_name])
     end
@@ -55,12 +59,12 @@ defmodule FFNN.Exoself do
   the {Id, PId} tuple into our ETS table for later use.
   """
   def spawn_cerebral_units(ids_n_pids, cerebral_unit_type, [id|ids]) do
-    pid = apply(cerebral_unit_type, :gen, [self()])
+    pid = apply(cerebral_unit_type, :gen, [self])
     :ets.insert(ids_n_pids, {id, pid})
     :ets.insert(ids_n_pids, {pid, id})
-    spawn_cerebral_units(ids_n_pids, cerebral_unit_type, Ids)
+    spawn_cerebral_units(ids_n_pids, cerebral_unit_type, ids)
   end
-  def spawn_cerebral_units(_ids_n_pids, _cerebral_unit_type, [])
+  def spawn_cerebral_units(_ids_n_pids, _cerebral_unit_type, []) do
     true
   end
 
@@ -69,27 +73,28 @@ defmodule FFNN.Exoself do
   ETS table. At this point all the elements are spawned, and the processes are
   waiting for their initial states.
   """
-
   def link_cerebral_units([%Sensor{} = sensor|cerebral_units], ids_n_pids) do
     sensor_pid = :ets.lookup_element(ids_n_pids, sensor.id, 2)
     cortex_pid = :ets.lookup_element(ids_n_pids, sensor.cx_id, 2)
     fanout_pids = for id <- sensor.fanout_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
-    {self(), {sensor.id, cortex_pid, sensor.name, sensor.vl, fanout_pids}} |> sensor_pid.send
+
+    msg = {self, {sensor.id, cortex_pid, sensor.name, sensor.vl, fanout_pids}}
+    send sensor_pid, {self, {sensor.id, cortex_pid, sensor.name, sensor.vl, fanout_pids}}
     link_cerebral_units(cerebral_units, ids_n_pids)
   end
   def link_cerebral_units([%Actuator{} = actuator|cerebral_units], ids_n_pids) do
-    actuator_pid = :ets.lookup_element(ids_n_pids, actuator_id, 2)
+    actuator_pid = :ets.lookup_element(ids_n_pids, actuator.id, 2)
     cortex_pid = :ets.lookup_element(ids_n_pids, actuator.cx_id, 2)
-    fanin_pids = for id <- actuator.fanin_ids, do: :ets.lookup_element(ids_n_pids, Id, 2)
-    {self, {actuator.id, cortex_pid, actuator.name, fanin_pids}} |> actuator_pid.send
+    fanin_pids = for id <- actuator.fanin_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
+    send actuator_pid, {self, {actuator.id, cortex_pid, actuator.name, fanin_pids}}
     link_cerebral_units(cerebral_units, ids_n_pids)
   end
   def link_cerebral_units([%Neuron{} = neuron|cerebral_units], ids_n_pids) do
     neuron_pid = :ets.lookup_element(ids_n_pids, neuron.id, 2)
     cortex_pid = :ets.lookup_element(ids_n_pids, neuron.cx_id, 2)
     input_pid_ps = convert_id_ps2pid_ps(ids_n_pids, neuron.input_id_ps, [])
-    output_pids = for id <- output_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
-    {self(), {neuron.id, cortex_pid, neuron.af, input_pid_ps, output_pids}} |> neuron_pid.send
+    output_pids = for id <- neuron.output_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
+    send neuron_pid, {self, {neuron.id, cortex_pid, neuron.af, input_pid_ps, output_pids}}
     link_cerebral_units(cerebral_units, ids_n_pids)
   end
   def link_cerebral_units([], _ids_n_pids), do: :ok
@@ -119,13 +124,10 @@ defmodule FFNN.Exoself do
   """
   def link_cortex(cortex, ids_n_pids) do
     cortex_pid = :ets.lookup_element(ids_n_pids, cortex.id, 2)
-    SIds = cortex.sensor_ids
-    AIds = cortex.actuator_ids
-    n_ids = cortex.n_ids
     sensor_pids = for id <- cortex.sensor_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
     actuator_pids = for id <- cortex.actuator_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
     neuron_pids = for id <- cortex.n_ids, do: :ets.lookup_element(ids_n_pids, id, 2)
-    {self(), {cortex.id, sensor_pids, actuator_pids, neuron_pids}, 1000} |> cortex_pid.send
+    send(cortex_pid, {self, {cortex.id, sensor_pids, actuator_pids, neuron_pids}, 1000})
   end
 
   @doc ~S"""
@@ -135,11 +137,19 @@ defmodule FFNN.Exoself do
   Input_p_id_ps list. The updated genotype is then returned back to the caller.
   """
   def update_genotype(ids_n_pids, genotype, [{neuron_id, p_id_ps}|weight_ps]) do
-    neuron = :lists.keyfind(neuron_id, 2, genotype)
+    IO.puts("genotype: #{inspect(genotype)}")
+    IO.puts("neuron_id: #{inspect(neuron_id)}")
+
+
+    ## FIXME: genotype is a list of maps/structs not tuples/records.  Find replacement.
+    neuron_index = Enum.find_index(genotype, fn(x) -> x.id == neuron_id end)
+    neuron = Enum.at(genotype, neuron_index)
+    #neuron = :lists.keyfind(neuron_id, 2, genotype)
     :io.format("p_id_ps:~p~n", [p_id_ps])
     input_id_ps = convert_p_id_ps2id_ps(ids_n_pids, p_id_ps, [])
-    updated_neuron = %Neuron{n | input_id_ps: input_id_ps}
-    updated_genotype = :lists.keyreplace(neuron_id, 2, genotype, updated_neuron)
+    IO.puts("neuron: #{inspect(neuron)}")
+    updated_neuron = %Neuron{neuron | input_id_ps: input_id_ps}
+    updated_genotype = List.replace_at(genotype, neuron_index, updated_neuron)
     :io.format("neuron:~p~n updated_neuron:~p~n genotype:~p~n updated_genotype:~p~n", [neuron, updated_neuron, genotype, updated_genotype])
     update_genotype(ids_n_pids, updated_genotype, weight_ps)
   end
@@ -151,6 +161,6 @@ defmodule FFNN.Exoself do
     convert_p_id_ps2id_ps(ids_n_pids, input_id_ps, [{:ets.lookup_element(ids_n_pids, pid, 2), weights}|acc])
   end
   def convert_p_id_ps2id_ps(_ids_n_pids, [bias], acc) do
-    :lists.reverse([{:bias, bias}|acc]).
+    :lists.reverse([{:bias, bias}|acc])
   end
 end

@@ -42,9 +42,11 @@ defmodule FFNN.Constructor do
     n_ids = for n <- List.flatten(neurons), do: n.id
     sensor = %Sensor{sensor | cx_id: cx_id, fanout_ids: fl_nids}
     actuator = %Actuator{actuator | cx_id: cx_id, fanin_ids: ll_nids}
-    cortex = create_cortex(cx_id, sensor.id, actuator.id, n_ids)
+    cortex = create_cortex(cx_id, [sensor.id], [actuator.id], n_ids)
     genotype = List.flatten([cortex, sensor, actuator | neurons])
-    :ok = :file.write_file(file_name, :io_lib.fwrite("~p.\n",[genotype]))
+    {:ok, file} = :file.open(file_name, :write)
+    :lists.foreach(fn(x) -> :io.format(file, "~p.~n",[x]) end, genotype)
+    :file.close(file)
   end
 
   @doc """

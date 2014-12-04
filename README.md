@@ -18,6 +18,11 @@ syntax I'm translating the Erlang code to Elixir as I go.
 
     iex -S mix
     SimplestNN.create
-    :cortex |> send(:sense_think_act)
+    send :cortex, :sense_think_act
 
-    
+## FFNN
+
+    iex -S mix
+    FFNN.Constructor.construct_genotype("/tmp/ffnn.terms", :rng, :pts, [1,3])
+    FFNN.Exoself.map("/tmp/ffnn.terms")
+

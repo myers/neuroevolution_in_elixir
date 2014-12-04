@@ -30,16 +30,16 @@ defmodule FFNN.Cortex do
   def loop(exoself_pid) do
     receive do
       {exoself_pid, {id, s_pids, a_pids, n_pids}, total_steps} ->
-        for s_pid <- s_pids, do: {self, :sync} |> s_pid.send
+        for s_pid <- s_pids, do: send(s_pid, {self, :sync})
         loop(id, exoself_pid, s_pids, {a_pids, a_pids}, n_pids, total_steps)
     end
   end
   def loop(id, exoself_pid, s_pids, {_a_pids, m_a_pids}, n_pids, 0) do
-    IO.puts "Cortex:#{id} finished, now backing up and terminating."
+    IO.puts "Cortex:#{inspect(id)} finished, now backing up and terminating."
     neuron_ids_and_weights = get_backup(n_pids, [])
-    {self, :backup, neuron_ids_and_weights} |> exoself_pid.send
+    send(exoself_pid, {self, :backup, neuron_ids_and_weights})
     for lst <- [s_pids, m_a_pids, n_pids] do
-      for pid <- lst, do: {self, :terminate} |> pid.send
+      for pid <- lst, do: send(pid, {self, :terminate})
     end
   end
   def loop(id, exoself_pid, s_pids, {[a_pid|a_pids], m_a_pids}, n_pids, step) do
@@ -47,14 +47,14 @@ defmodule FFNN.Cortex do
       {a_pid, :sync} ->
         loop(id, exoself_pid, s_pids, {a_pids, m_a_pids}, n_pids, step)
       :terminate ->
-        IO.puts "Cortex:#{id} is terminating."
+        IO.puts "Cortex:#{inspect(id)} is terminating."
         for lst <- [s_pids, m_a_pids, n_pids] do
-          for pid <- lst, do: {self, :terminate} |> pid.send
+          for pid <- lst, do: send(pid, {self, :terminate})
         end
     end
   end
   def loop(id, exoself_pid, s_pids, {[], m_a_pids}, n_pids, step) do
-    for s_pid <- s_pids, do: {self, :sync} |> s_pid.send
+    for s_pid <- s_pids, do: send(s_pid, {self, :sync})
     loop(id, exoself_pid, s_pids, {m_a_pids, m_a_pids}, n_pids, step-1)
   end
 
@@ -66,7 +66,7 @@ defmodule FFNN.Cortex do
   backup and storage.
   """
   def get_backup([n_pid|n_pids], acc) do
-    {self, :get_backup} |> n_pid.send
+    send(n_pid, {self, :get_backup})
     receive do
       {n_pid, n_id, weight_tuples} ->
         get_backup(n_pids, [{n_id, weight_tuples}|acc])
