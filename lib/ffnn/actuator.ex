@@ -1,4 +1,6 @@
 defmodule FFNN.Actuator do
+  require Logger
+
   defstruct id: nil, cx_id: nil, name: nil, vl: nil, fanin_ids: []
 
   @doc ~S"""
@@ -34,7 +36,7 @@ defmodule FFNN.Actuator do
     end
   end
   def loop(id, cortex_pid, actuator_name, {[], m_fanin_pids}, acc) do
-    apply(actuator_name, [Enum.reverse(acc)])
+    apply(__MODULE__, actuator_name, [Enum.reverse(acc)])
     send(cortex_pid, {self(), :sync})
     loop(id, cortex_pid, actuator_name, {m_fanin_pids, m_fanin_pids}, [])
   end
@@ -45,6 +47,6 @@ defmodule FFNN.Actuator do
   The pts actuation function simply prints to screen the vector passed to it.
   """
   def pts(result) do
-    IO.puts "actuator:pts(result): #{inspect(result)}"
+    Logger.debug "actuator:pts(result): #{inspect(result)}"
   end
 end

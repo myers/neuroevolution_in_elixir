@@ -1,4 +1,6 @@
 defmodule FFNN.Cortex do
+  require Logger
+
   defstruct id: nil, sensor_ids: [], actuator_ids: [], n_ids: []
 
   @doc """
@@ -35,7 +37,7 @@ defmodule FFNN.Cortex do
     end
   end
   def loop(id, exoself_pid, s_pids, {_a_pids, m_a_pids}, n_pids, 0) do
-    IO.puts "Cortex:#{inspect(id)} finished, now backing up and terminating."
+    Logger.debug "Cortex:#{inspect(id)} finished, now backing up and terminating."
     neuron_ids_and_weights = get_backup(n_pids, [])
     send(exoself_pid, {self(), :backup, neuron_ids_and_weights})
     for lst <- [s_pids, m_a_pids, n_pids] do
@@ -47,7 +49,7 @@ defmodule FFNN.Cortex do
       {^a_pid, :sync} ->
         loop(id, exoself_pid, s_pids, {a_pids, m_a_pids}, n_pids, step)
       :terminate ->
-        IO.puts "Cortex:#{inspect(id)} is terminating."
+        Logger.info "Cortex:#{inspect(id)} is terminating."
         for lst <- [s_pids, m_a_pids, n_pids] do
           for pid <- lst, do: send(pid, {self(), :terminate})
         end

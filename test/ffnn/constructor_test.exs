@@ -1,7 +1,11 @@
 defmodule FFNN.ConstructorTest do
   use ExUnit.Case
 
-  test "example from book" do
-    FFNN.Constructor.construct_genotype(Path.join(__DIR__, "ffnn.terms"), :rng, :pts, [1,3])
+  test "creates NN and writes it to disk" do
+    tmp_path = Temp.mkdir! "ConstructorTest"
+    genome_path = Path.join(tmp_path, "ffnn.terms")
+    assert FFNN.Constructor.construct_genotype(genome_path, :rng, :pts, [1,3]) == :ok
+    assert File.exists?(genome_path)
+    File.rm_rf!(tmp_path)
   end
 end

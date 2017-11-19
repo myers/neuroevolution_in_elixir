@@ -1,5 +1,7 @@
 # From 6.2 A One Neuron Neural Network
 defmodule SimplestNN do
+  require Logger
+  
   # The create function first generates 3 weights, with the 3rd weigth being the
   # bias. The neuron is spawed first, and is then sent the pids of the sensor
   # and actuator that it's connected with.  Then the cortex element is
@@ -21,7 +23,7 @@ defmodule SimplestNN do
   def neuron(weights, _s_pid, a_pid) do
     receive do
       {s_pid, :forward, input} ->
-        IO.puts "**** Thinking ****\n Input: #{inspect input}\n with weights: #{inspect weights}"
+        Logger.info "**** Thinking ****\n Input: #{inspect input}\n with weights: #{inspect weights}"
         dot_product = dot(input, weights, 0)
         output = [:math.tanh(dot_product)]
         a_pid |> send({self(), :forward, output})
@@ -55,7 +57,7 @@ defmodule SimplestNN do
     receive do
       :sync ->
         sensory_signal = [:rand.uniform, :rand.uniform]
-        IO.puts "**** Sensing ****\n Signal from the env #{inspect sensory_signal}"
+        Logger.info "**** Sensing ****\n Signal from the env #{inspect sensory_signal}"
         n_pid |> send({self(), :forward, sensory_signal})
       :terminate ->
         :ok
@@ -76,7 +78,7 @@ defmodule SimplestNN do
   end
 
   def pts(control_signal) do
-    IO.puts "**** Acting ****\n Using: #{inspect control_signal} to act on env"
+    Logger.info "**** Acting ****\n Using: #{inspect control_signal} to act on env"
   end
 
   # The cortex function triggers the sensor to action when commanded by the

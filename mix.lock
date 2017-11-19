@@ -1,0 +1,2 @@
+%{"ksuid": {:hex, :ksuid, "0.1.2", "7c32d822aecfada9e38eb0398f9bae6018e91eb5097e8b0315842bd8148490a8", [], [], "hexpm"},
+  "temp": {:hex, :temp, "0.4.3", "b641c3ce46094839bff110fdb64162536d640d9d47ca2c37add9104a2fa3bd81", [], [], "hexpm"}}

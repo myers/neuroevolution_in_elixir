@@ -47,7 +47,7 @@ defmodule FFNN.Exoself do
         {:ok, file} = :file.open(file_name, :write)
         :lists.foreach(fn(x) -> :io.format(file, "~p.~n", [x]) end, u_genotype)
         :file.close(file)
-        :io.format("Finished updating to file:~p~n", [file_name])
+        Logger.debug("Finished updating to file: #{file_name}")
     end
   end
 
@@ -58,7 +58,6 @@ defmodule FFNN.Exoself do
   the {Id, PId} tuple into our ETS table for later use.
   """
   def spawn_cerebral_units(ids_n_pids, cerebral_unit_type, [id|ids]) do
-    Logger.info "spawn_cerebral_units #{cerebral_unit_type}"
     pid = apply(cerebral_unit_type, :gen, [self()])
     :ets.insert(ids_n_pids, {id, pid})
     :ets.insert(ids_n_pids, {pid, id})
@@ -135,20 +134,21 @@ defmodule FFNN.Exoself do
   Input_p_id_ps list. The updated genotype is then returned back to the caller.
   """
   def update_genotype(ids_n_pids, genotype, [{neuron_id, p_id_ps}|weight_ps]) do
-    IO.puts("genotype: #{inspect(genotype)}")
-    IO.puts("neuron_id: #{inspect(neuron_id)}")
-
-
+    Logger.debug("genotype: #{inspect(genotype)}")
+    Logger.debug("neuron_id: #{inspect(neuron_id)}")
     ## FIXME: genotype is a list of maps/structs not tuples/records.  Find replacement.
     neuron_index = Enum.find_index(genotype, fn(x) -> x.id == neuron_id end)
     neuron = Enum.at(genotype, neuron_index)
     #neuron = :lists.keyfind(neuron_id, 2, genotype)
-    :io.format("p_id_ps:~p~n", [p_id_ps])
+    Logger.debug("p_id_ps: #{inspect(p_id_ps)}")
     input_id_ps = convert_p_id_ps2id_ps(ids_n_pids, p_id_ps, [])
-    IO.puts("neuron: #{inspect(neuron)}")
+    Logger.debug("neuron: #{inspect(neuron)}")
     updated_neuron = %Neuron{neuron | input_id_ps: input_id_ps}
     updated_genotype = List.replace_at(genotype, neuron_index, updated_neuron)
-    :io.format("neuron:~p~n updated_neuron:~p~n genotype:~p~n updated_genotype:~p~n", [neuron, updated_neuron, genotype, updated_genotype])
+    Logger.debug("neuron: #{inspect(neuron)}")
+    Logger.debug("updated_neuron: #{inspect(updated_neuron)}")
+    Logger.debug("genotype: #{inspect(genotype)}")
+    Logger.debug("updated_genotype: #{inspect(updated_genotype)}")
     update_genotype(ids_n_pids, updated_genotype, weight_ps)
   end
   def update_genotype(_ids_n_pids, genotype, []) do

@@ -41,7 +41,7 @@ defmodule FFNN.Neuron do
     end
   end
   def loop(id, cortex_pid, af, {[bias], m_input_id_ps}, output_pids, acc) do
-    output = apply(af, [acc+bias])
+    output = apply(__MODULE__, af, [acc+bias])
     for output_pid <- output_pids, do: send(output_pid, {self(), :forward, [output]})
     loop(id, cortex_pid, af, {m_input_id_ps, m_input_id_ps}, output_pids, 0)
   end

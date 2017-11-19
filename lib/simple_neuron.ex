@@ -1,5 +1,6 @@
 # From 6.1 Simulating A Neuron
 defmodule SimpleNeuron do
+  require Logger
 
   # The create function spawns a single neuron, where the weights and the bias
   # are generated randomly to be between -0.5 and 0.5
@@ -14,7 +15,7 @@ defmodule SimpleNeuron do
   def loop(weights) do
     receive do
       {from, input} ->
-        IO.puts "**** Processing ****\n Input #{inspect input}\n Using Weigths #{inspect weights}"
+        Logger.info "**** Processing ****\n Input #{inspect input}\n Using Weigths #{inspect weights}"
         dot_product = dot(input, weights, 0)
         output = [:math.tanh(dot_product)]
         from |> send({:result, output})
@@ -43,10 +44,10 @@ defmodule SimpleNeuron do
         send(:neuron, {self(), signal})
         receive do
           {:result, output} ->
-            IO.puts " Output #{inspect output}"
+            Logger.info " Output #{inspect output}"
         end
       false ->
-        IO.puts "The signal must be a list of length 2"
+        Logger.info "The signal must be a list of length 2"
     end
   end
 end

@@ -19,6 +19,9 @@ defmodule NeuroevolutionInElixir.Mixfile do
   # To specify particular versions, regardless of the tag, do:
   # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
   defp deps do
-    []
+    [
+        {:temp, "~> 0.4"},
+        {:ksuid, "~> 0.1.2"}
+    ]
   end
 end

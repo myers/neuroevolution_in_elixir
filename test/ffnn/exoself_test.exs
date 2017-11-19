@@ -1,8 +1,10 @@
 defmodule FFNN.ExoselfTest do
   use ExUnit.Case
 
-  test "example from book" do
-    assert FFNN.Constructor.construct_genotype(Path.join(__DIR__, "ffnn.terms"), :rng, :pts, [1,3]) == :ok
-    #FFNN.Exoself.map(Path.join(__DIR__, "ffnn.terms"))
+  test "load example genome file" do
+    tmp_path = Temp.mkdir! "ExoselfTest"
+    genome_path = Path.join(tmp_path, "ffnn.terms")
+    File.cp Path.join(__DIR__, "example_ffnn.terms"), genome_path
+    assert FFNN.Exoself.map(genome_path) == :ok
   end
 end

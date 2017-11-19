@@ -164,8 +164,7 @@ defmodule FFNN.Constructor do
     generate_ids(index-1, [id|acc])
   end
   def generate_id() do
-    {mega_seconds, seconds, micro_seconds} = :os.timestamp()
-    1/(mega_seconds*1000000 + seconds + micro_seconds/1000000)
+    Ksuid.generate()
   end
 
   @doc """
