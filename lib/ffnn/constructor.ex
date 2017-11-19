@@ -33,7 +33,7 @@ defmodule FFNN.Constructor do
     actuator = create_actuator(actuator_name)
     output_vl = actuator.vl
     layer_densities = List.insert_at(hidden_layer_densities, -1, output_vl)
-    cx_id = {:cortex, generate_id}
+    cx_id = {:cortex, generate_id()}
     neurons = create_neuro_layers(cx_id, sensor, actuator, layer_densities)
     input_layer = List.first(neurons)
     output_layer = List.last(neurons)
@@ -67,7 +67,7 @@ defmodule FFNN.Constructor do
   def create_sensor(name) do
     case name do
       :rng ->
-        %Sensor{id: {:sensor, generate_id}, name: :rng, vl: 2}
+        %Sensor{id: {:sensor, generate_id()}, name: :rng, vl: 2}
       _ ->
         exit("System does not yet support a sensor by the name #{name}")
     end
@@ -76,7 +76,7 @@ defmodule FFNN.Constructor do
   def create_actuator(name) do
     case name do
       :pts ->
-        %Actuator{id: {:actuator, generate_id}, name: :pts, vl: 1}
+        %Actuator{id: {:actuator, generate_id()}, name: :pts, vl: 1}
       _ ->
         exit("System does not yet support a actuator by the name #{name}")
     end
@@ -144,12 +144,12 @@ defmodule FFNN.Constructor do
     create_neural_input(input_id_ps, [{input_id, weights} | acc])
   end
   def create_neural_input([], acc) do
-    Enum.reverse([{:bias, :random.uniform()-0.5 } | acc])
+    Enum.reverse([{:bias, :rand.uniform()-0.5 } | acc])
   end
 
   def create_neural_weights(0, acc), do: acc
   def create_neural_weights(index, acc) do
-    w = :random.uniform() - 0.5
+    w = :rand.uniform() - 0.5
     create_neural_weights(index - 1, [w|acc])
   end
 
@@ -164,7 +164,7 @@ defmodule FFNN.Constructor do
     generate_ids(index-1, [id|acc])
   end
   def generate_id() do
-    {mega_seconds, seconds, micro_seconds} = :erlang.now()
+    {mega_seconds, seconds, micro_seconds} = :os.timestamp()
     1/(mega_seconds*1000000 + seconds + micro_seconds/1000000)
   end
 

@@ -35,7 +35,7 @@ defmodule FFNN.Actuator do
   end
   def loop(id, cortex_pid, actuator_name, {[], m_fanin_pids}, acc) do
     apply(actuator_name, [Enum.reverse(acc)])
-    send(cortex_pid, {self, :sync})
+    send(cortex_pid, {self(), :sync})
     loop(id, cortex_pid, actuator_name, {m_fanin_pids, m_fanin_pids}, [])
   end
 

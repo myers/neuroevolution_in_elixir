@@ -5,7 +5,7 @@ defmodule SimplestNN do
   # and actuator that it's connected with.  Then the cortex element is
   # registered and provided with the pids of all the elements in the NN system.
   def create do
-    weights = [:random.uniform() - 0.5, :random.uniform() - 0.5, :random.uniform() - 0.5]
+    weights = [:rand.uniform() - 0.5, :rand.uniform() - 0.5, :rand.uniform() - 0.5]
     n_pid = spawn __MODULE__, :neuron, [weights, nil, nil]
     s_pid = spawn __MODULE__, :sensor, [n_pid]
     a_pid = spawn __MODULE__, :actuator, [n_pid]
@@ -20,12 +20,12 @@ defmodule SimplestNN do
   # outgoing a_pid
   def neuron(weights, _s_pid, a_pid) do
     receive do
-      {_s_pid, :forward, input} ->
+      {s_pid, :forward, input} ->
         IO.puts "**** Thinking ****\n Input: #{inspect input}\n with weights: #{inspect weights}"
         dot_product = dot(input, weights, 0)
         output = [:math.tanh(dot_product)]
-        a_pid |> send({self, :forward, output})
-        neuron(weights, _s_pid, a_pid)
+        a_pid |> send({self(), :forward, output})
+        neuron(weights, s_pid, a_pid)
       {:init, new_s_pid, new_a_pid} ->
         neuron(weights, new_s_pid, new_a_pid)
       :terminate ->
@@ -54,9 +54,9 @@ defmodule SimplestNN do
   def sensor(n_pid) do
     receive do
       :sync ->
-        sensory_signal = [:random.uniform, :random.uniform]
+        sensory_signal = [:rand.uniform, :rand.uniform]
         IO.puts "**** Sensing ****\n Signal from the env #{inspect sensory_signal}"
-        n_pid |> send({self, :forward, sensory_signal})
+        n_pid |> send({self(), :forward, sensory_signal})
       :terminate ->
         :ok
     end
@@ -67,9 +67,9 @@ defmodule SimplestNN do
   # prints the value to the screen.
   def actuator(_n_pid) do
     receive do
-      {_n_pid, :forward, control_signal} ->
+      {n_pid, :forward, control_signal} ->
         pts(control_signal)
-        actuator(_n_pid)
+        actuator(n_pid)
       :terminate ->
         :ok
     end

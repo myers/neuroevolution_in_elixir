@@ -4,7 +4,7 @@ defmodule SimpleNeuron do
   # The create function spawns a single neuron, where the weights and the bias
   # are generated randomly to be between -0.5 and 0.5
   def create do
-    weights = [:random.uniform() - 0.5, :random.uniform() - 0.5, :random.uniform() - 0.5]
+    weights = [:rand.uniform() - 0.5, :rand.uniform() - 0.5, :rand.uniform() - 0.5]
     Process.register(spawn(__MODULE__, :loop, [weights]), :neuron)
   end
 
@@ -39,8 +39,8 @@ defmodule SimpleNeuron do
   # length 2.
   def sense(signal) do
     case is_list(signal) and (length(signal) == 2) do
-      true -> 
-        send(:neuron, {self, signal})
+      true ->
+        send(:neuron, {self(), signal})
         receive do
           {:result, output} ->
             IO.puts " Output #{inspect output}"

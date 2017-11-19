@@ -4,8 +4,8 @@ defmodule NeuroevolutionInElixir.Mixfile do
   def project do
     [ app: :neuroevolution_in_elixir,
       version: "0.0.1",
-      elixir: "~> 1.0.2",
-      deps: deps ]
+      elixir: "~> 1.5.2",
+      deps: deps() ]
   end
 
   # Configuration for the OTP application
