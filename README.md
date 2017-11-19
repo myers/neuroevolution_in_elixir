@@ -7,6 +7,7 @@ syntax I'm translating the Erlang code to Elixir as I go.
 
 [book]: http://www.amazon.com/Handbook-Neuroevolution-Through-Erlang-Gene/dp/1461444624
 
+ * https://github.com/CorticalComputer/Book_NeuroevolutionThroughErlang
 
 ## Simple Neuron
 

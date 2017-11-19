@@ -24,7 +24,7 @@ defmodule FFNN.Sensor do
   def loop(id, cortex_pid, sensor_name, vl, fanout_pids) do
     receive do
       {^cortex_pid, :sync} ->
-        sensory_vector = apply(__MODULE__, sensor_name, [vl])
+        sensory_vector = apply(sensor_name, [vl])
         for pid <- fanout_pids, do: send(pid, {self, :forward, sensory_vector})
         loop(id, cortex_pid, sensor_name, vl, fanout_pids)
       {^cortex_pid, :terminate} ->
