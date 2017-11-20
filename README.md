@@ -9,6 +9,8 @@ syntax I'm translating the Erlang code to Elixir as I go.
 
  * https://github.com/CorticalComputer/Book_NeuroevolutionThroughErlang
 
+If you want to see a visualization of neural networks, you should checkout [TensorFlow's Playground](http://playground.tensorflow.org/)
+
 ## Simple Neuron
 
     iex -S mix
@@ -26,4 +28,3 @@ syntax I'm translating the Erlang code to Elixir as I go.
     iex -S mix
     FFNN.Constructor.construct_genotype("/tmp/ffnn.terms", :rng, :pts, [1,3])
     FFNN.Exoself.map("/tmp/ffnn.terms")
-
