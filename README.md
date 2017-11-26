@@ -1,5 +1,7 @@
 # Neuroevolution In Elixir
 
+[![Build Status](https://travis-ci.org/myers/neuroevolution_in_elixir.svg?branch=master)](https://travis-ci.org/myers/neuroevolution_in_elixir)
+
 I'm currently reading [Handbook of Neuroevolution Through Erlang][book] and
 learning a lot.  In it are examples showing how to build neural nets with
 Erlang.  In order to drive home what I'm learning and to learn the Elixir
